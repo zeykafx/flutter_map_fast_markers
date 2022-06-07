@@ -72,7 +72,7 @@ class MarkerLayerWidget extends StatelessWidget {
 class FastMarkersLayer extends StatefulWidget {
   final FastMarkersLayerOptions layerOptions;
   final MapState map;
-  final Stream<void> stream;
+  final Stream stream;
 
   FastMarkersLayer(this.layerOptions, this.map, this.stream)
       : super(key: layerOptions.key);
@@ -109,7 +109,7 @@ class _FastMarkersLayerState extends State<FastMarkersLayer> {
       width: double.infinity,
       height: double.infinity,
       child: StreamBuilder<int>(
-        stream: widget.stream as Stream<int>, // a Stream<int> or null
+        stream: widget.stream.cast<int>(), // a Stream<int> or null
         builder: (BuildContext context, snapshot) {
           return CustomPaint(
             painter: painter,
