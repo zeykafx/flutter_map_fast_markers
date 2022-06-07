@@ -6,9 +6,11 @@ import 'fast_markers_layer.dart';
 
 class FastMarkersPlugin extends MapPlugin {
   @override
-  Widget createLayer(
-      LayerOptions options, MapState mapState, Stream<void> stream) {
-    return FastMarkersLayer(options as FastMarkersLayerOptions, mapState, stream);
+  Widget createLayer(LayerOptions options, MapState mapState, Stream<void> stream) {
+    if (options is FastMarkersLayerOptions)
+      return FastMarkersLayer(options, mapState, stream);
+    else
+      throw (StateError("Cannot gain options"));
   }
 
   @override

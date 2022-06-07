@@ -39,6 +39,6 @@ class FastMarkersLayerOptions extends LayerOptions {
     // this.rotate = false,
     // this.rotateOrigin,
     // this.rotateAlignment = Alignment.center,
-    Stream<Null>? rebuild,
+    Stream<void>? rebuild,
   }) : super(key: key, rebuild: rebuild);
 }
