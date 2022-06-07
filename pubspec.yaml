@@ -13,8 +13,8 @@ dependencies:
     sdk: flutter
   flutter_map:
     git:
-      url: "https://github.com/KanarekApp/flutter_map"
-      ref: canary
+      url: "https://github.com/zeykafx/flutter_map"
+      ref: master
   collection: ^1.15.0-nullsafety.4
 
 dev_dependencies:
