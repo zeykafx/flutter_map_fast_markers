@@ -74,8 +74,7 @@ class FastMarkersLayer extends StatefulWidget {
   final MapState map;
   final Stream stream;
 
-  FastMarkersLayer(this.layerOptions, this.map, this.stream)
-      : super(key: layerOptions.key);
+  FastMarkersLayer(this.layerOptions, this.map, this.stream) : super(key: layerOptions.key);
 
   @override
   _FastMarkersLayerState createState() => _FastMarkersLayerState();
@@ -156,13 +155,10 @@ class _FastMarkersPainter extends CustomPainter {
         _pxCache[i] = pxPoint;
       }
 
-      var topLeft = CustomPoint(
-          pxPoint.x - marker.anchor.left, pxPoint.y - marker.anchor.top);
-      var bottomRight =
-          CustomPoint(topLeft.x + marker.width, topLeft.y + marker.height);
+      var topLeft = CustomPoint(pxPoint.x - marker.anchor.left, pxPoint.y - marker.anchor.top);
+      var bottomRight = CustomPoint(topLeft.x + marker.width, topLeft.y + marker.height);
 
-      if (!map.pixelBounds
-          .containsPartialBounds(Bounds(topLeft, bottomRight))) {
+      if (!map.pixelBounds.containsPartialBounds(Bounds(topLeft, bottomRight))) {
         continue;
       }
 
@@ -180,16 +176,18 @@ class _FastMarkersPainter extends CustomPainter {
   }
 
   bool onTap(Offset pos) {
-    final marker = markersBoundsCache.reversed.firstWhere(
-      (e) => e.key.contains(CustomPoint(pos.dx, pos.dy)),
-      // orElse: () => null,
-    );
-    if (marker != null) {
-      marker.value.onTap();
-      return false;
-    } else {
+    final marker;
+    try {
+      marker = markersBoundsCache.reversed.firstWhere(
+        (e) => e.key.contains(CustomPoint(pos.dx, pos.dy)),
+        // orElse: () => null,
+      );
+    } catch (error) {
       return true;
     }
+    
+    marker.value.onTap();
+    return false;
   }
 
   @override
