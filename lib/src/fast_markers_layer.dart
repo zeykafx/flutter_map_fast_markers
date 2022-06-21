@@ -182,7 +182,7 @@ class _FastMarkersPainter extends CustomPainter {
     );
 
     if (marker != null) {
-      marker!.value.onTap();
+      marker.value.onTap();
       return false;
     } else {
       return true;
