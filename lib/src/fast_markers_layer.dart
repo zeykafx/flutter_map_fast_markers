@@ -176,22 +176,32 @@ class _FastMarkersPainter extends CustomPainter {
   }
 
   bool onTap(Offset pos) {
-    final marker;
-    try {
-      marker = markersBoundsCache.reversed.firstWhere(
-        (e) => e.key.contains(CustomPoint(pos.dx, pos.dy)),
-        // orElse: () => null,
-      );
-    } catch (error) {
+    final MapEntry<Bounds<num>, FastMarker>? marker;
+    marker = markersBoundsCache.reversed.firstWhereOrNull(
+      (e) => e.key.contains(CustomPoint(pos.dx, pos.dy)),
+    );
+
+    if (marker != null) {
+      marker!.value.onTap();
+      return false;
+    } else {
       return true;
     }
-    
-    marker.value.onTap();
-    return false;
   }
 
   @override
   bool shouldRepaint(covariant _FastMarkersPainter oldDelegate) {
     return true;
+  }
+}
+
+
+// https://github.com/dart-lang/sdk/issues/42947
+extension IterableExtension<T> on Iterable<T> {
+  T? firstWhereOrNull(bool Function(T element) test) {
+    for (var element in this) {
+      if (test(element)) return element;
+    }
+    return null;
   }
 }
