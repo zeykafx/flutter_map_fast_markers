@@ -1,21 +1,16 @@
-import 'package:flutter/gestures.dart';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_map/plugin_api.dart';
+import 'package:flutter_map/flutter_map.dart';
+// import 'package:flutter_map/plugin_api.dart';
 import 'package:latlong2/latlong.dart';
-
-import 'fast_markers_layer_option.dart';
-
-extension on CustomPoint {
-  Offset toOffset() => Offset(this.x.toDouble(), this.y.toDouble());
-}
 
 class FastMarker {
   final LatLng point;
   final double width;
   final double height;
-  final Anchor anchor;
+  final Alignment alignment;
   final Function(Canvas canvas, Offset offset) onDraw;
   final Function() onTap;
 
@@ -53,28 +48,42 @@ class FastMarker {
     // this.rotate,
     // this.rotateOrigin,
     // this.rotateAlignment,
-    AnchorPos? anchorPos,
-  }) : anchor = Anchor.forPos(anchorPos, width, height);
+    Alignment? alignment,
+  }) : alignment = alignment ?? Alignment.center;
 }
 
 class MarkerLayerWidget extends StatelessWidget {
-  final FastMarkersLayerOptions options;
+  final List<FastMarker> markers;
+  final Function() onTap;
 
-  MarkerLayerWidget({Key? key, required this.options}) : super(key: key);
+  MarkerLayerWidget({Key? key, required this.markers, required this.onTap})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final mapState = MapState.maybeOf(context);
-    return FastMarkersLayer(options, mapState!, mapState.onMoved);
+    final MapCamera camera = MapCamera.of(context);
+    final MapController controller = MapController.of(context);
+    final MapOptions options = MapOptions.of(context);
+
+    return FastMarkersLayer(
+      camera,
+      controller,
+      options,
+      markers,
+      onTap,
+    );
   }
 }
 
 class FastMarkersLayer extends StatefulWidget {
-  final FastMarkersLayerOptions layerOptions;
-  final MapState map;
-  final Stream stream;
+  final MapCamera camera;
+  final MapController controller;
+  final MapOptions map_options;
+  final List<FastMarker> markers;
+  late final onTap;
 
-  FastMarkersLayer(this.layerOptions, this.map, this.stream) : super(key: layerOptions.key);
+  FastMarkersLayer(
+      this.camera, this.controller, this.map_options, this.markers, this.onTap);
 
   @override
   _FastMarkersLayerState createState() => _FastMarkersLayerState();
@@ -87,18 +96,25 @@ class _FastMarkersLayerState extends State<FastMarkersLayer> {
   void initState() {
     super.initState();
     painter = _FastMarkersPainter(
-      widget.map,
-      widget.layerOptions,
+      widget.camera,
+      widget.controller,
+      widget.map_options,
+      widget.markers,
     );
-    widget.map.onTapRaw = (p) => painter!.onTap(p.relative!);
+
+    widget.onTap = (p) => painter!.onTap(p.relative!);
+
+    // widget.map_options.onTapRaw = (p) => painter!.onTap(p.relative!);
   }
 
   @override
   void didUpdateWidget(covariant FastMarkersLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
     painter = _FastMarkersPainter(
-      widget.map,
-      widget.layerOptions,
+      widget.camera,
+      widget.controller,
+      widget.map_options,
+      widget.markers,
     );
   }
 
@@ -108,7 +124,8 @@ class _FastMarkersLayerState extends State<FastMarkersLayer> {
       width: double.infinity,
       height: double.infinity,
       child: StreamBuilder<int>(
-        stream: widget.stream.cast<int>(), // a Stream<int> or null
+        stream: widget.controller.mapEventStream
+            .cast<int>(), // a Stream<int> or null
         builder: (BuildContext context, snapshot) {
           return CustomPaint(
             painter: painter,
@@ -121,12 +138,16 @@ class _FastMarkersLayerState extends State<FastMarkersLayer> {
 }
 
 class _FastMarkersPainter extends CustomPainter {
-  final MapState map;
-  final FastMarkersLayerOptions options;
+  final MapCamera camera;
+  final MapController controller;
+  final MapOptions map_options;
+
+  final List<FastMarker> markers;
   final List<MapEntry<Bounds, FastMarker>> markersBoundsCache = [];
   var _lastZoom = -1.0;
 
-  _FastMarkersPainter(this.map, this.options) {
+  _FastMarkersPainter(
+      this.camera, this.controller, this.map_options, this.markers) {
     _pxCache = generatePxCache();
   }
 
@@ -134,51 +155,54 @@ class _FastMarkersPainter extends CustomPainter {
   /// Should be discarded when zoom changes
   // Has a fixed length of markerOpts.markers.length - better performance:
   // https://stackoverflow.com/questions/15943890/is-there-a-performance-benefit-in-using-fixed-length-lists-in-dart
-  var _pxCache = <CustomPoint>[];
+  var _pxCache = <Point>[];
 
   // Calling this every time markerOpts change should guarantee proper length
-  List<CustomPoint> generatePxCache() => List.generate(
-        options.markers.length,
-        (i) => map.project(options.markers[i].point),
+  List<Point> generatePxCache() => List.generate(
+        markers.length,
+        (i) => camera.project(markers[i].point),
       );
 
   @override
   void paint(Canvas canvas, Size size) {
-    final sameZoom = map.zoom == _lastZoom;
+    final sameZoom = camera.zoom == _lastZoom;
     markersBoundsCache.clear();
-    for (var i = 0; i < options.markers.length; i++) {
-      var marker = options.markers[i];
+    for (var i = 0; i < markers.length; i++) {
+      var marker = markers[i];
 
       // Decide whether to use cached point or calculate it
-      var pxPoint = sameZoom ? _pxCache[i] : map.project(marker.point);
+      var pxPoint = sameZoom ? _pxCache[i] : camera.project(marker.point);
       if (!sameZoom) {
         _pxCache[i] = pxPoint;
       }
 
-      var topLeft = CustomPoint(pxPoint.x - marker.anchor.left, pxPoint.y - marker.anchor.top);
-      var bottomRight = CustomPoint(topLeft.x + marker.width, topLeft.y + marker.height);
+      var topLeft =
+          Point(pxPoint.x - marker.alignment.x, pxPoint.y - marker.alignment.y);
+      var bottomRight =
+          Point(topLeft.x + marker.width, topLeft.y + marker.height);
 
-      if (!map.pixelBounds.containsPartialBounds(Bounds(topLeft, bottomRight))) {
+      if (!camera.pixelBounds
+          .containsPartialBounds(Bounds(topLeft, bottomRight))) {
         continue;
       }
 
-      final pos = (topLeft - map.getPixelOrigin());
+      final pos = (topLeft - camera.pixelOrigin);
       // TODO: Rotating
       marker.onDraw(canvas, pos.toOffset());
       markersBoundsCache.add(
         MapEntry(
-          Bounds(pos, pos + CustomPoint(marker.width, marker.height)),
+          Bounds(pos, pos + Point(marker.width, marker.height)),
           marker,
         ),
       );
     }
-    _lastZoom = map.zoom;
+    _lastZoom = camera.zoom;
   }
 
   bool onTap(Offset pos) {
     final MapEntry<Bounds<num>, FastMarker>? marker;
     marker = markersBoundsCache.reversed.firstWhereOrNull(
-      (e) => e.key.contains(CustomPoint(pos.dx, pos.dy)),
+      (e) => e.key.contains(Point(pos.dx, pos.dy)),
     );
 
     if (marker != null) {
@@ -194,7 +218,6 @@ class _FastMarkersPainter extends CustomPainter {
     return true;
   }
 }
-
 
 // https://github.com/dart-lang/sdk/issues/42947
 extension IterableExtension<T> on Iterable<T> {

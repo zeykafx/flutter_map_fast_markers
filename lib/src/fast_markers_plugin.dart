@@ -1,20 +1,30 @@
 import 'package:flutter/widgets.dart';
-import 'package:flutter_map/plugin_api.dart';
-import 'package:flutter_map_fast_markers/flutter_map_fast_markers.dart';
+import 'package:flutter_map/flutter_map.dart';
 
-import 'fast_markers_layer.dart';
+import '../flutter_map_fast_markers.dart';
 
-class FastMarkersPlugin extends MapPlugin {
-  @override
-  Widget createLayer(LayerOptions options, MapState mapState, Stream<void> stream) {
-    if (options is FastMarkersLayerOptions)
-      return FastMarkersLayer(options, mapState, stream);
-    else
-      throw (StateError("Cannot gain options"));
-  }
+class FastMarkersPlugin extends StatelessWidget {
+  final List<FastMarker> markers;
+  final Function() onTap;
+
+  const FastMarkersPlugin(
+      {Key? key, required this.markers, required this.onTap})
+      : super(key: key);
 
   @override
-  bool supportsLayer(LayerOptions options) {
-    return options is FastMarkersLayerOptions;
+  Widget build(BuildContext context) {
+    final MapCamera camera = MapCamera.of(context);
+    final MapController controller = MapController.of(context);
+    final MapOptions options = MapOptions.of(context);
+
+    return MobileLayerTransformer(
+      child: FastMarkersLayer(
+        camera,
+        controller,
+        options,
+        markers,
+        onTap,
+      ),
+    );
   }
 }
