@@ -120,12 +120,12 @@ class _FastMarkersLayerState extends State<FastMarkersLayer> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        // painter!.onTap(p.relative!);
+      onTapDown: (TapDownDetails details) {
         // get position of the tap
-        final RenderBox renderBox = context.findRenderObject() as RenderBox;
-        final localPosition = renderBox.globalToLocal(Offset.zero);
-        painter!.onTap(localPosition);
+        double x = details.localPosition.dx;
+        double y = details.localPosition.dy;
+
+        painter!.onTap(Offset(x, y));
       },
       child: Container(
         width: double.infinity,
@@ -184,8 +184,11 @@ class _FastMarkersPainter extends CustomPainter {
         _pxCache[i] = pxPoint;
       }
 
-      var topLeft =
-          Point(pxPoint.x - marker.alignment.x, pxPoint.y - marker.alignment.y);
+      var topLeft = Point(
+          pxPoint.x -
+              (marker.alignment.x *
+                  25), // Why is 25 the value that centers the markers??
+          pxPoint.y - (marker.alignment.y * 25));
       var bottomRight =
           Point(topLeft.x + marker.width, topLeft.y + marker.height);
 
