@@ -103,7 +103,7 @@ class _FastMarkersLayerState extends State<FastMarkersLayer> {
 
     // widget.onTap = (p) => painter!.onTap(p.relative!);
 
-    // widget.map_options.onTapRaw = (p) => painter!.onTap(p.relative!);
+    // widget.controller. = (p) => painter!.onTap(p.relative!);
   }
 
   @override
@@ -119,18 +119,27 @@ class _FastMarkersLayerState extends State<FastMarkersLayer> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      child: StreamBuilder<int>(
-        stream: widget.controller.mapEventStream
-            .cast<int>(), // a Stream<int> or null
-        builder: (BuildContext context, snapshot) {
-          return CustomPaint(
-            painter: painter,
-            willChange: true,
-          );
-        },
+    return GestureDetector(
+      onTap: () {
+        // painter!.onTap(p.relative!);
+        // get position of the tap
+        final RenderBox renderBox = context.findRenderObject() as RenderBox;
+        final localPosition = renderBox.globalToLocal(Offset.zero);
+        painter!.onTap(localPosition);
+      },
+      child: Container(
+        width: double.infinity,
+        height: double.infinity,
+        child: StreamBuilder<int>(
+          stream: widget.controller.mapEventStream
+              .cast<int>(), // a Stream<int> or null
+          builder: (BuildContext context, snapshot) {
+            return CustomPaint(
+              painter: painter,
+              willChange: true,
+            );
+          },
+        ),
       ),
     );
   }
