@@ -70,7 +70,6 @@ class MarkerLayerWidget extends StatelessWidget {
       controller,
       options,
       markers,
-      onTap,
     );
   }
 }
@@ -80,10 +79,10 @@ class FastMarkersLayer extends StatefulWidget {
   final MapController controller;
   final MapOptions map_options;
   final List<FastMarker> markers;
-  late final onTap;
+  // late final onTap;
 
   FastMarkersLayer(
-      this.camera, this.controller, this.map_options, this.markers, this.onTap);
+      this.camera, this.controller, this.map_options, this.markers);
 
   @override
   _FastMarkersLayerState createState() => _FastMarkersLayerState();
@@ -102,7 +101,7 @@ class _FastMarkersLayerState extends State<FastMarkersLayer> {
       widget.markers,
     );
 
-    widget.onTap = (p) => painter!.onTap(p.relative!);
+    // widget.onTap = (p) => painter!.onTap(p.relative!);
 
     // widget.map_options.onTapRaw = (p) => painter!.onTap(p.relative!);
   }

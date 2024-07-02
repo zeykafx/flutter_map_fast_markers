@@ -5,11 +5,8 @@ import '../flutter_map_fast_markers.dart';
 
 class FastMarkersPlugin extends StatelessWidget {
   final List<FastMarker> markers;
-  final Function() onTap;
 
-  const FastMarkersPlugin(
-      {Key? key, required this.markers, required this.onTap})
-      : super(key: key);
+  const FastMarkersPlugin({Key? key, required this.markers}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +20,6 @@ class FastMarkersPlugin extends StatelessWidget {
         controller,
         options,
         markers,
-        onTap,
       ),
     );
   }
